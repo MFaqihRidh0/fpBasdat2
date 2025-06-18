@@ -14,6 +14,18 @@
       padding: 20px;
     }
 
+    /* [BARU] Style untuk Peringatan Stok */
+    #low-stock-alert {
+      display: none; /* Sembunyi secara default */
+      background-color: #e74c3c;
+      color: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+
     /* Layout & Containers */
     .container {
       background-color: #ffffff;
@@ -102,16 +114,8 @@
     }
     .close-btn:hover { color: black; }
 
-    /* [BARU] Style untuk grup input di dalam modal */
-    .input-group-modal {
-        margin-bottom: 15px;
-    }
-    .input-group-modal label {
-        display: block;
-        text-align: left;
-        margin-bottom: 5px;
-        font-weight: bold;
-    }
+    .input-group-modal { margin-bottom: 15px; }
+    .input-group-modal label { display: block; text-align: left; margin-bottom: 5px; font-weight: bold; }
     
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideIn { from { transform: translateY(-50px); } to { transform: translateY(0); } }
@@ -120,6 +124,8 @@
 <body>
 
   <h1>Dasbor Manajemen Toko</h1>
+
+  <div id="low-stock-alert"></div>
 
   <div class="grid-container">
     <div class="container">
@@ -244,7 +250,6 @@
         modalFields.innerHTML = `<label>Nama Kategori:</label><input id="edit-nama" value="${data.nama}" required>`;
       } 
       
-      // [DIUBAH] Struktur HTML untuk Edit Supplier
       else if (type === 'supplier') {
         modalTitle.innerText = 'Edit Supplier';
         modalFields.innerHTML = `
@@ -265,7 +270,6 @@
       
       else if (type === 'produk') {
         modalTitle.innerText = 'Edit Produk';
-        // [DIRAPIKAN] Struktur HTML untuk Edit Produk juga diperbaiki
         modalFields.innerHTML = `
           <div class="input-group-modal">
             <label>Nama:</label><input id="edit-nama" value="${data.nama}" required>
@@ -429,7 +433,7 @@
         loadAllData();
     });
 
-    // --- LOGIKA UNTUK TRANSAKSI ---
+    // --- LOGIKA TRANSAKSI ---
     let itemsPenjualan = [];
     let itemsPembelian = [];
 
@@ -450,7 +454,7 @@
     function renderItemsPenjualan() {
         const list = document.getElementById('list-items-penjualan');
         list.innerHTML = '';
-        itemsPenjualan.forEach((item, index) => {
+        itemsPenjualan.forEach((item) => {
             const li = document.createElement('li');
             li.innerText = `${item.nama} - Jumlah: ${item.jumlah}`;
             list.appendChild(li);
@@ -520,6 +524,21 @@
         });
     }
     
+    // --- [BARU] Fungsi untuk Cek Stok Rendah ---
+    async function checkLowStock() {
+        const alertDiv = document.getElementById('low-stock-alert');
+        const res = await fetch('/api/low-stock', { headers: authHeader });
+        const lowStockProducts = await res.json();
+
+        if (lowStockProducts.length > 0) {
+            const productNames = lowStockProducts.map(p => `${p.nama} (Sisa ${p.stok})`).join(', ');
+            alertDiv.innerHTML = `PERINGATAN: Stok produk menipis! ${productNames}`;
+            alertDiv.style.display = 'block';
+        } else {
+            alertDiv.style.display = 'none';
+        }
+    }
+
     // --- INITIAL LOAD ---
     async function loadAllData() {
         try {
@@ -563,6 +582,9 @@
             const txSupplierSelect = document.getElementById('tx-supplier');
             txSupplierSelect.innerHTML = '';
             sup.forEach(s => txSupplierSelect.add(new Option(s.nama, s._id)));
+
+            // [BARU] Panggil fungsi cek stok rendah
+            await checkLowStock();
 
         } catch (err) {
             console.error("Gagal memuat data awal:", err);
