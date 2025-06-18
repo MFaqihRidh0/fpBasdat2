@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dasbor Manajemen</title>
+  <style>
+    /* General Styling */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
+      color: #1c1e21;
+      margin: 0;
+      padding: 20px;
+    }
+
+    /* Layout & Containers */
+    .container {
+      background-color: #ffffff;
+      padding: 20px 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+    h1 { text-align: center; color: #1877f2; }
+    h2 { border-bottom: 1px solid #dddfe2; padding-bottom: 10px; margin-top: 0; }
+    h3 { margin-top: 20px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+    
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    /* Form Elements */
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccd0d5;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #1877f2;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+    button:hover { background-color: #166fe5; }
+    
+    .delete-btn { background-color: #e74c3c; }
+    .delete-btn:hover { background-color: #c0392b; }
+    
+    .edit-btn { background-color: #f0ad4e; }
+    .edit-btn:hover { background-color: #ec971f; }
+
+    #submit-transaksi-btn, #submit-pembelian-btn {
+        background-color: #2ecc71;
+        width: 100%;
+        padding: 12px;
+        margin-top: 15px;
+    }
+    #submit-transaksi-btn:hover, #submit-pembelian-btn:hover { background-color: #27ae60; }
+    
+    /* List Styling */
+    ul { list-style-type: none; padding: 0; }
+    li {
+      background-color: #f0f2f5;
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .li-actions button { margin-left: 8px; }
+
+    /* Modal Styling */
+    .modal {
+      display: none; position: fixed; z-index: 1000;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      animation: fadeIn 0.3s;
+    }
+    .modal-content {
+      background-color: #fff; margin: 15vh auto;
+      padding: 25px; border-radius: 8px;
+      width: 90%; max-width: 500px;
+      position: relative;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s;
+    }
+    .close-btn {
+      color: #aaa; position: absolute; top: 10px; right: 20px;
+      font-size: 28px; font-weight: bold; cursor: pointer;
+    }
+    .close-btn:hover { color: black; }
+
+    /* [BARU] Style untuk grup input di dalam modal */
+    .input-group-modal {
+        margin-bottom: 15px;
+    }
+    .input-group-modal label {
+        display: block;
+        text-align: left;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideIn { from { transform: translateY(-50px); } to { transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <h1>Dasbor Manajemen Toko</h1>
+
+  <div class="grid-container">
+    <div class="container">
+      <h2>Kelola Kategori</h2>
+      <form id="form-kat" style="display: flex; gap: 10px;">
+        <input id="new-kat" placeholder="Nama kategori" style="flex-grow: 1; margin: 0;" required/>
+        <button type="submit">Tambah</button>
+      </form>
+      <ul id="list-kat" style="margin-top: 15px;"></ul>
+    </div>
+    
+    <div class="container">
+      <h2>Kelola Supplier</h2>
+      <form id="form-supplier">
+        <input id="new-supplier-nama" placeholder="Nama supplier" required/>
+        <input id="new-supplier-alamat" placeholder="Alamat" required/>
+        <input id="new-supplier-kontak" placeholder="Kontak" required/>
+        <button type="submit">Tambah Supplier</button>
+      </form>
+      <ul id="list-supplier" style="margin-top: 15px;"></ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Kelola Produk</h2>
+    <form id="form-produk">
+        <div class="grid-container">
+            <input id="p-nama" placeholder="Nama produk" required/>
+            <input id="p-stok" type="number" placeholder="Stok" required/>
+            <input id="p-harga" type="number" placeholder="Harga" required/>
+            <select id="p-kat" required></select>
+        </div>
+        <button type="submit" style="width: 100%; margin-top: 10px;">Tambah Produk</button>
+    </form>
+    <ul id="list-produk" style="margin-top: 15px;"></ul>
+  </div>
+
+  <div class="grid-container">
+    <div class="container">
+      <h2>Transaksi Penjualan</h2>
+      <label>Nama Pembeli:</label>
+      <input id="pembeli" placeholder="Masukkan nama pembeli"/>
+      <label>Jenis Bayar:</label>
+      <select id="jenispembayaran">
+        <option value="Cash">Cash</option>
+        <option value="Credit">Credit</option>
+      </select>
+      <hr/>
+      <label>Pilih Produk & Jumlah:</label>
+      <div style="display: flex; gap: 10px;">
+        <select id="tx-produk" style="flex-grow: 1; margin: 0;"></select>
+        <input id="tx-jumlah" type="number" placeholder="Jumlah" style="width: 80px; margin: 0;"/>
+        <button onclick="addItemPenjualan()">+</button>
+      </div>
+      <ul id="list-items-penjualan"></ul>
+      <button id="submit-transaksi-btn" onclick="submitTransaksi()">Submit Transaksi</button>
+      <h3>Riwayat Penjualan</h3>
+      <ul id="list-penjualan"></ul>
+    </div>
+
+    <div class="container">
+      <h2>Transaksi Pembelian</h2>
+      <label>Supplier:</label>
+      <select id="tx-supplier"></select>
+      <hr/>
+      <label>Pilih Produk, Jumlah & Harga Beli:</label>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <select id="txp-produk" style="flex-basis: 100%;"></select>
+          <input id="txp-jumlah" type="number" placeholder="Jumlah" style="flex-grow: 1;"/>
+          <input id="txp-harga" type="number" placeholder="Harga Beli" style="flex-grow: 1;"/>
+          <button onclick="addItemPembelian()">+</button>
+      </div>
+      <ul id="list-items-pembelian"></ul>
+      <button id="submit-pembelian-btn" onclick="submitPembelian()">Submit Pembelian</button>
+      <h3>Riwayat Pembelian</h3>
+      <ul id="list-pembelian"></ul>
+    </div>
+  </div>
+
+
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeEditModal()">&times;</span>
+      <h2 id="modal-title">Edit Item</h2>
+      <form id="edit-form">
+        <div id="edit-fields"></div>
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="edit-type">
+        <button type="submit">Simpan Perubahan</button>
+      </form>
+    </div>
+  </div>
+
+
+  <script>
+    // --- AUTH & GLOBAL ---
+    const token = localStorage.getItem('admin-token');
+    if (!token) {
+      window.location.href = '/index.html';
+    }
+    const authHeader = { 'x-admin-token': token, 'Content-Type': 'application/json' };
+
+    // --- Elemen Modal ---
+    const modal = document.getElementById('edit-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalFields = document.getElementById('edit-fields');
+    const editIdInput = document.getElementById('edit-id');
+    const editTypeInput = document.getElementById('edit-type');
+    
+    // --- FUNGSI MODAL ---
+    function closeEditModal() {
+      modal.style.display = 'none';
+    }
+
+    async function openEditModal(type, id, data) {
+      editIdInput.value = id;
+      editTypeInput.value = type;
+      modalFields.innerHTML = '';
+
+      if (type === 'kategori') {
+        modalTitle.innerText = 'Edit Kategori';
+        modalFields.innerHTML = `<label>Nama Kategori:</label><input id="edit-nama" value="${data.nama}" required>`;
+      } 
+      
+      // [DIUBAH] Struktur HTML untuk Edit Supplier
+      else if (type === 'supplier') {
+        modalTitle.innerText = 'Edit Supplier';
+        modalFields.innerHTML = `
+          <div class="input-group-modal">
+            <label for="edit-nama">Nama:</label>
+            <input id="edit-nama" value="${data.nama}" required>
+          </div>
+          <div class="input-group-modal">
+            <label for="edit-alamat">Alamat:</label>
+            <input id="edit-alamat" value="${data.alamat}" required>
+          </div>
+          <div class="input-group-modal">
+            <label for="edit-kontak">Kontak:</label>
+            <input id="edit-kontak" value="${data.kontak}" required>
+          </div>
+        `;
+      } 
+      
+      else if (type === 'produk') {
+        modalTitle.innerText = 'Edit Produk';
+        // [DIRAPIKAN] Struktur HTML untuk Edit Produk juga diperbaiki
+        modalFields.innerHTML = `
+          <div class="input-group-modal">
+            <label>Nama:</label><input id="edit-nama" value="${data.nama}" required>
+          </div>
+          <div class="input-group-modal">
+            <label>Stok:</label><input id="edit-stok" type="number" value="${data.stok}" required>
+          </div>
+          <div class="input-group-modal">
+            <label>Harga:</label><input id="edit-harga" type="number" value="${data.harga}" required>
+          </div>
+          <div class="input-group-modal">
+            <label>Kategori:</label><select id="edit-p-kat"></select>
+          </div>
+        `;
+        await loadKategoriToSelect('edit-p-kat', data.kategori._id);
+      }
+      modal.style.display = 'block';
+    }
+
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = editIdInput.value;
+        const type = editTypeInput.value;
+        let body;
+
+        if (type === 'kategori') {
+            body = { nama: document.getElementById('edit-nama').value };
+        } else if (type === 'supplier') {
+            body = {
+                nama: document.getElementById('edit-nama').value,
+                alamat: document.getElementById('edit-alamat').value,
+                kontak: document.getElementById('edit-kontak').value,
+            };
+        } else if (type === 'produk') {
+            body = {
+                nama: document.getElementById('edit-nama').value,
+                stok: document.getElementById('edit-stok').value,
+                harga: document.getElementById('edit-harga').value,
+                kategori: document.getElementById('edit-p-kat').value,
+            };
+        }
+
+        try {
+            const res = await fetch(`/api/${type}/${id}`, {
+                method: 'PUT',
+                headers: authHeader,
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error('Gagal menyimpan data');
+            
+            closeEditModal();
+            loadAllData();
+            alert('Data berhasil diperbarui!');
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    });
+
+    // --- FUNGSI CRUD & RENDER ---
+    async function deleteItem(type, id) {
+        if (!confirm(`Apakah Anda yakin ingin menghapus item ini?`)) return;
+        try {
+            await fetch(`/api/${type}/${id}`, { method: 'DELETE', headers: authHeader });
+            loadAllData();
+        } catch (err) { alert(`Error: ${err.message}`); }
+    }
+
+    async function loadKategoriToSelect(selectId, selectedValue = null) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+        const res = await fetch('/api/kategori', { headers: authHeader });
+        const kats = await res.json();
+        kats.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k._id;
+            opt.innerText = k.nama;
+            if (k._id === selectedValue) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    function renderKategori(data) {
+        const list = document.getElementById('list-kat');
+        list.innerHTML = '';
+        data.forEach(kat => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${kat.nama}</span>
+                <div class="li-actions">
+                    <button class="delete-btn" onclick="deleteItem('kategori', '${kat._id}')">X</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function renderSupplier(data) {
+        const list = document.getElementById('list-supplier');
+        list.innerHTML = '';
+        data.forEach(sup => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${sup.nama} — ${sup.alamat} — ${sup.kontak}</span>
+                <div class="li-actions">
+                    <button class="edit-btn" onclick='openEditModal("supplier", "${sup._id}", ${JSON.stringify(sup)})'>Edit</button>
+                    <button class="delete-btn" onclick="deleteItem('supplier', '${sup._id}')">X</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+    
+    function renderProduk(data) {
+        const list = document.getElementById('list-produk');
+        list.innerHTML = '';
+        data.forEach(p => {
+            const li = document.createElement('li');
+            const kategoriNama = p.kategori ? p.kategori.nama : 'Tidak ada kategori';
+            li.innerHTML = `
+                <span>${p.nama} (Stok: ${p.stok}) - Rp ${p.harga} - [${kategoriNama}]</span>
+                <div class="li-actions">
+                    <button class="edit-btn" onclick='openEditModal("produk", "${p._id}", ${JSON.stringify(p)})'>Edit</button>
+                    <button class="delete-btn" onclick="deleteItem('produk', '${p._id}')">X</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+    
+    // --- FORM SUBMISSION ---
+    document.getElementById('form-kat').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nama = document.getElementById('new-kat').value;
+        await fetch('/api/kategori', { method: 'POST', headers: authHeader, body: JSON.stringify({ nama }) });
+        document.getElementById('new-kat').value = '';
+        loadAllData();
+    });
+    
+    document.getElementById('form-supplier').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            nama: document.getElementById('new-supplier-nama').value,
+            alamat: document.getElementById('new-supplier-alamat').value,
+            kontak: document.getElementById('new-supplier-kontak').value
+        };
+        await fetch('/api/supplier', { method: 'POST', headers: authHeader, body: JSON.stringify(body) });
+        e.target.reset();
+        loadAllData();
+    });
+    
+    document.getElementById('form-produk').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            nama: document.getElementById('p-nama').value,
+            stok: document.getElementById('p-stok').value,
+            harga: document.getElementById('p-harga').value,
+            kategori: document.getElementById('p-kat').value,
+        };
+        await fetch('/api/produk', { method: 'POST', headers: authHeader, body: JSON.stringify(body) });
+        e.target.reset();
+        loadAllData();
+    });
+
+    // --- LOGIKA UNTUK TRANSAKSI ---
+    let itemsPenjualan = [];
+    let itemsPembelian = [];
+
+    function addItemPenjualan() {
+        const produkSelect = document.getElementById('tx-produk');
+        const produkId = produkSelect.value;
+        const produkNama = produkSelect.options[produkSelect.selectedIndex].text;
+        const jumlah = parseInt(document.getElementById('tx-jumlah').value);
+
+        if (!produkId || !jumlah || jumlah <= 0) {
+            alert('Pilih produk dan masukkan jumlah yang valid.');
+            return;
+        }
+        itemsPenjualan.push({ produk: produkId, nama: produkNama, jumlah });
+        renderItemsPenjualan();
+    }
+
+    function renderItemsPenjualan() {
+        const list = document.getElementById('list-items-penjualan');
+        list.innerHTML = '';
+        itemsPenjualan.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.innerText = `${item.nama} - Jumlah: ${item.jumlah}`;
+            list.appendChild(li);
+        });
+    }
+    
+    async function submitTransaksi() {
+        const pembeli = document.getElementById('pembeli').value;
+        const jenisPembayaran = document.getElementById('jenispembayaran').value;
+        if (!pembeli || itemsPenjualan.length === 0) {
+            alert('Isi nama pembeli dan tambahkan item terlebih dahulu.');
+            return;
+        }
+        const body = { pembeli, jenisPembayaran, items: itemsPenjualan };
+        await fetch('/api/penjualan', { method: 'POST', headers: authHeader, body: JSON.stringify(body) });
+        itemsPenjualan = [];
+        document.getElementById('pembeli').value = '';
+        renderItemsPenjualan();
+        loadAllData();
+    }
+
+    function addItemPembelian() {
+        const produkSelect = document.getElementById('txp-produk');
+        const produkId = produkSelect.value;
+        const produkNama = produkSelect.options[produkSelect.selectedIndex].text;
+        const jumlah = parseInt(document.getElementById('txp-jumlah').value);
+        const hargaBeli = parseInt(document.getElementById('txp-harga').value);
+        if (!produkId || !jumlah || !hargaBeli || jumlah <= 0 || hargaBeli <= 0) {
+            alert('Lengkapi semua field pembelian dengan benar.');
+            return;
+        }
+        itemsPembelian.push({ produk: produkId, nama: produkNama, jumlah, hargaBeliSatuan: hargaBeli });
+        renderItemsPembelian();
+    }
+    
+    function renderItemsPembelian() {
+        const list = document.getElementById('list-items-pembelian');
+        list.innerHTML = '';
+        itemsPembelian.forEach(item => {
+            const li = document.createElement('li');
+            li.innerText = `${item.nama} - Jumlah: ${item.jumlah} @ Rp ${item.hargaBeliSatuan}`;
+            list.appendChild(li);
+        });
+    }
+
+    async function submitPembelian() {
+        const supplierId = document.getElementById('tx-supplier').value;
+        if (!supplierId || itemsPembelian.length === 0) {
+            alert('Pilih supplier dan tambahkan item terlebih dahulu.');
+            return;
+        }
+        const body = { supplierId, items: itemsPembelian };
+        await fetch('/api/pembelian', { method: 'POST', headers: authHeader, body: JSON.stringify(body) });
+        itemsPembelian = [];
+        renderItemsPembelian();
+        loadAllData();
+    }
+
+    function renderRiwayat(idList, data) {
+        const list = document.getElementById(idList);
+        list.innerHTML = '';
+        data.forEach(item => {
+            const li = document.createElement('li');
+            const tanggal = new Date(item.tanggal).toLocaleString('id-ID');
+            li.innerText = `${tanggal} - Total: Rp ${item.totalHarga}`;
+            list.appendChild(li);
+        });
+    }
+    
+    // --- INITIAL LOAD ---
+    async function loadAllData() {
+        try {
+            const [resKat, resSup, resProd, resPenjualan, resPembelian] = await Promise.all([
+                fetch('/api/kategori', { headers: authHeader }),
+                fetch('/api/supplier', { headers: authHeader }),
+                fetch('/api/produk', { headers: authHeader }),
+                fetch('/api/penjualan', { headers: authHeader }),
+                fetch('/api/pembelian', { headers: authHeader })
+            ]);
+            if (!resKat.ok || !resSup.ok || !resProd.ok || !resPenjualan.ok || !resPembelian.ok) {
+                throw new Error('Sesi berakhir atau terjadi kesalahan server.');
+            }
+            const kat = await resKat.json();
+            const sup = await resSup.json();
+            const prod = await resProd.json();
+            const penjualan = await resPenjualan.json();
+            const pembelian = await resPembelian.json();
+            
+            // Render CRUD
+            renderKategori(kat);
+            renderSupplier(sup);
+            renderProduk(prod);
+            
+            // Render Transaksi & Riwayat
+            renderRiwayat('list-penjualan', penjualan);
+            renderRiwayat('list-pembelian', pembelian);
+
+            // Load options for selects
+            loadKategoriToSelect('p-kat');
+            
+            // Load options for transaksi
+            const txProdukSelect = document.getElementById('tx-produk');
+            txProdukSelect.innerHTML = '';
+            prod.forEach(p => txProdukSelect.add(new Option(`${p.nama} (Stok: ${p.stok})`, p._id)));
+
+            const txpProdukSelect = document.getElementById('txp-produk');
+            txpProdukSelect.innerHTML = '';
+            prod.forEach(p => txpProdukSelect.add(new Option(p.nama, p._id)));
+
+            const txSupplierSelect = document.getElementById('tx-supplier');
+            txSupplierSelect.innerHTML = '';
+            sup.forEach(s => txSupplierSelect.add(new Option(s.nama, s._id)));
+
+        } catch (err) {
+            console.error("Gagal memuat data awal:", err);
+            alert("Sesi Anda mungkin telah berakhir. Silakan login kembali.");
+            window.location.href = '/index.html';
+        }
+    }
+
+    window.onload = loadAllData;
+  </script>
+</body>
+</html>

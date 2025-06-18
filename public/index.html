@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Login Admin</title>
+  <style>
+    /* Background tidak diubah */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('fotoKelompok.jpeg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* --- [DIUBAH] Style untuk Form yang Lebih Vertikal --- */
+
+    .login-container {
+      background-color: rgba(255, 255, 255, 0.95); /* Sedikit lebih solid */
+      padding: 25px 30px; /* Padding diubah sedikit */
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      width: 300px; /* Lebar diperkecil agar lebih ramping */
+      text-align: center;
+    }
+    
+    h1 {
+      margin-top: 0;
+      margin-bottom: 25px; /* Beri jarak lebih ke bawah */
+      color: #333;
+    }
+    
+    /* [BARU] Grup untuk label dan input */
+    .input-group {
+        margin-bottom: 20px; /* Memberi jarak antar input, membuat form lebih tinggi */
+        text-align: left; /* Teks label rata kiri */
+    }
+
+    /* [BARU] Style untuk label */
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    input {
+      width: 100%; /* Lebar penuh mengikuti container */
+      padding: 12px; /* Dibuat lebih tebal */
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box; /* Penting agar padding tidak menambah lebar */
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #1877f2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px; /* Beri jarak dari input terakhir */
+    }
+
+    button:hover {
+      background-color: #166fe5;
+    }
+
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Admin Login</h1>
+
+    <div class="input-group">
+      <label for="user">Username</label>
+      <input id="user" placeholder="Masukkan username"/>
+    </div>
+    
+    <div class="input-group">
+      <label for="pass">Password</label>
+      <input id="pass" type="password" placeholder="Masukkan password"/>
+    </div>
+
+    <button onclick="login()">Login</button>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    function login() {
+      const messageDiv = document.getElementById('message');
+      messageDiv.innerText = '';
+
+      fetch('/api/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          username: document.getElementById('user').value,
+          password: document.getElementById('pass').value
+        })
+      })
+      .then(r => {
+        if (!r.ok) {
+          throw new Error('Login gagal, periksa username dan password.');
+        }
+        return r.json();
+      })
+      .then(j => {
+        if (j.success) {
+          localStorage.setItem('admin-token', j.token); 
+          window.location.href = 'dashboard.html';
+        } else {
+          messageDiv.innerText = 'Login gagal.';
+        }
+      })
+      .catch(err => {
+        messageDiv.innerText = err.message;
+      });
+    }
+  </script>
+</body>
+</html>
